@@ -1,0 +1,10 @@
+# depslib dependency file v1.0
+1629079271 source:/home/ponycandy/codeblocks/codeblock1/main.cpp
+	<stdio.h>
+	<string.h>
+	<unistd.h>
+	<netdb.h>
+	<sys/types.h>
+	<sys/socket.h>
+	<arpa/inet.h>
+
