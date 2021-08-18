@@ -365,7 +365,67 @@ typedef union {
 
 #pragma pack(pop)
 
+struct ScoutState {
+  enum MotorID {
+    FRONT_RIGHT = 0,
+    FRONT_LEFT = 1,
+    REAR_LEFT = 2,
+    REAR_RIGHT = 3
+  };
 
+  struct ActuatorState {
+    double motor_current = 0;  // in A
+    double motor_rpm = 0;
+    uint16_t motor_pulses = 0;
+    double motor_temperature = 0;
+
+    double driver_voltage = 0;
+    double driver_temperature = 0;
+    uint8_t driver_state = 0;
+  };
+
+  struct LightState {
+    uint8_t mode = 0;
+    uint8_t custom_value = 0;
+  };
+
+  // base state
+  uint8_t base_state = 0;
+  uint8_t control_mode = 0;
+  uint8_t fault_code = 0;
+  double battery_voltage = 0.0;
+
+  // motor state
+  static constexpr uint8_t motor_num = 4;
+  ActuatorState actuator_states[motor_num];
+
+  // light state
+  bool light_control_enabled = false;
+  LightState front_light_state;
+  LightState rear_light_state;
+
+  // motion state
+  double linear_velocity = 0;
+  double angular_velocity = 0;
+
+  // odometer state
+  double left_odometry = 0;
+  double right_odometry = 0;
+
+  // BMS date
+  uint8_t SOC;
+  uint8_t SOH;
+  double bms_battery_voltage = 0.0;
+  double battery_current = 0.0;
+  double battery_temperature = 0.0;
+
+  // BMS state
+  uint8_t Alarm_Status_1;
+  uint8_t Alarm_Status_2;
+  uint8_t Warning_Status_1;
+  uint8_t Warning_Status_2;
+
+};
 struct can_frame {//定义can结构
             uint32_t can_id;
             uint8_t can_dlc=8;
@@ -431,9 +491,12 @@ class Connector
         can_frame canframe;
         can_frame* can_frame_pt{ &canframe };
         AgxMessage agx_msg;
-        LightStateMessage mgs;
+		AgxMessage* agx_msg_pt{ &agx_msg };
+		ScoutState scout_state;
+		ScoutState* scout_state_pt{ &scout_state };
         Connector();
         int init();
+		bool DecodeCanFrame(const struct can_frame *rx_frame, AgxMessage *msg) 
 
        void unpack_all();
         void convert_data_once();
