@@ -21,11 +21,11 @@ int main()
     //test_cmd("swing",0.2,ioport);//输入指定命令
 }
 
-//void test_print_all_information(Connector &ioport)
-//{
+void test_print_all_information(Connector &ioport)
+{
 
- //   ioport.unpack_all();
- //   ioport.printall();
-//}
+    ioport.unpack_all();
+    ioport.printall();
+}
 
 

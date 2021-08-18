@@ -89,61 +89,57 @@ void Connector::printall()//打印一次所有信息，调试专用函数
 void Connector::copy_to_can_frame(can_frame *rx_frame, uint8_t *msg)
 {
             ++msg;
-        uint32_t iterim{0};
-//          memcpy(&rx_frame->can_id,&iterim,1);
-//          memcpy((&rx_frame->can_id)+1,&iterim,1);
-//          memcpy((&rx_frame->can_id)+2,&iterim,1);
-//          memcpy((&rx_frame->can_id)+3,&iterim,1);
-            iterim=(
+           rx_frame->can_id=(
           static_cast<uint32_t>(msg[0]) |
           static_cast<uint32_t>(msg[2]) << 8 |
           static_cast<uint32_t>(msg[3]));
-          printf("canID1: %0x finish \n",iterim);
-        rx_frame->can_id=iterim;
+//          printf("canID1: %0x finish \n",rx_frame->can_id);
         for(int count{0};count<=7;++count)
             {
                 rx_frame->data[count]=msg[count+4];
             }
-                    for(int count{0};count<=7;++count)
-            {
-              printf("%0x ",rx_frame->data[count]);
-            }
+//                    for(int count{0};count<=7;++count)
+//            {
+//              printf("%0x ",rx_frame->data[count]);
+//            }
 
-switch (rx_frame->can_id)
+//switch (rx_frame->can_id)
+//{
+//case CAN_MSG_MOTION_COMMAND_ID:{ printf("getID!CAN_MSG_MOTION_COMMAND_ID\n");break;};
+//case CAN_MSG_LIGHT_COMMAND_ID:{ printf("getID!CAN_MSG_LIGHT_COMMAND_ID\n");break;};
+//case CAN_MSG_PARK_COMMAND_ID:{ printf("getID!CAN_MSG_PARK_COMMAND_ID\n");break;};
+//case CAN_MSG_SYSTEM_STATE_ID:{ printf("getID!CAN_MSG_SYSTEM_STATE_ID\n");break;};
+//case CAN_MSG_MOTION_STATE_ID:{ printf("getID!CAN_MSG_MOTION_STATE_ID\n");break;};
+//case CAN_MSG_LIGHT_STATE_ID:{ printf("getID!CAN_MSG_LIGHT_STATE_ID\n");break;};
+//case CAN_MSG_RC_STATE_ID:{ printf("getID!CAN_MSG_RC_STATE_ID\n");break;};
+//case CAN_MSG_ACTUATOR1_HS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR1_HS_STATE_ID\n");break;};
+//case CAN_MSG_ACTUATOR2_HS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR2_HS_STATE_ID\n");break;};
+//case CAN_MSG_ACTUATOR3_HS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR3_HS_STATE_ID\n");break;};
+//case CAN_MSG_ACTUATOR4_HS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR4_HS_STATE_ID\n");break;};
+//case CAN_MSG_ACTUATOR1_LS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR1_LS_STATE_ID\n");break;};
+//case CAN_MSG_ACTUATOR2_LS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR2_LS_STATE_ID\n");break;};
+//case CAN_MSG_ACTUATOR3_LS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR3_LS_STATE_ID\n");break;};
+//case CAN_MSG_ACTUATOR4_LS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR4_LS_STATE_ID\n");break;};
+//case CAN_MSG_ODOMETRY_ID:{ printf("getID!CAN_MSG_ODOMETRY_ID\n");break;};
+//case CAN_MSG_BMS_DATE_ID:{ printf("getID!CAN_MSG_BMS_DATE_ID\n");break;};
+//case CAN_MSG_BMS_STATUES_ID:{ printf("getID!CAN_MSG_BMS_STATUES_ID\n");break;};
+//case CAN_MSG_VERSION_QUERY_ID:{ printf("getID!CAN_MSG_VERSION_QUERY_ID\n");break;};
+//case CAN_MSG_PLATFORM_VERSION_ID:{ printf("getID!CAN_MSG_PLATFORM_VERSION_ID\n");break;};
+//case CAN_MSG_CTRL_MODE_SELECT_ID:{ printf("getID!CAN_MSG_CTRL_MODE_SELECT_ID\n");break;};
+//case CAN_MSG_STEER_NEUTRAL_RESET_ID:{ printf("getID!CAN_MSG_STEER_NEUTRAL_RESET_ID\n");break;};
+//case CAN_MSG_STEER_NEUTRAL_RESET_ACK_ID:{ printf("getID!CAN_MSG_STEER_NEUTRAL_RESET_ACK_ID\n");break;};
+//case CAN_MSG_STATE_RESET_ID:{ printf("getID!CAN_MSG_STATE_RESET_ID\n");break;};
+//
+//}
+
+}
+
+
+void Connector::convert_data_once()
+
 {
-case CAN_MSG_MOTION_COMMAND_ID:{ printf("getID!CAN_MSG_MOTION_COMMAND_ID\n");break;};
-case CAN_MSG_LIGHT_COMMAND_ID:{ printf("getID!CAN_MSG_LIGHT_COMMAND_ID\n");break;};
-case CAN_MSG_PARK_COMMAND_ID:{ printf("getID!CAN_MSG_PARK_COMMAND_ID\n");break;};
-case CAN_MSG_SYSTEM_STATE_ID:{ printf("getID!CAN_MSG_SYSTEM_STATE_ID\n");break;};
-case CAN_MSG_MOTION_STATE_ID:{ printf("getID!CAN_MSG_MOTION_STATE_ID\n");break;};
-case CAN_MSG_LIGHT_STATE_ID:{ printf("getID!CAN_MSG_LIGHT_STATE_ID\n");break;};
-case CAN_MSG_RC_STATE_ID:{ printf("getID!CAN_MSG_RC_STATE_ID\n");break;};
-case CAN_MSG_ACTUATOR1_HS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR1_HS_STATE_ID\n");break;};
-case CAN_MSG_ACTUATOR2_HS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR2_HS_STATE_ID\n");break;};
-case CAN_MSG_ACTUATOR3_HS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR3_HS_STATE_ID\n");break;};
-case CAN_MSG_ACTUATOR4_HS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR4_HS_STATE_ID\n");break;};
-case CAN_MSG_ACTUATOR1_LS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR1_LS_STATE_ID\n");break;};
-case CAN_MSG_ACTUATOR2_LS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR2_LS_STATE_ID\n");break;};
-case CAN_MSG_ACTUATOR3_LS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR3_LS_STATE_ID\n");break;};
-case CAN_MSG_ACTUATOR4_LS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR4_LS_STATE_ID\n");break;};
-case CAN_MSG_ODOMETRY_ID:{ printf("getID!CAN_MSG_ODOMETRY_ID\n");break;};
-case CAN_MSG_BMS_DATE_ID:{ printf("getID!CAN_MSG_BMS_DATE_ID\n");break;};
-case CAN_MSG_BMS_STATUES_ID:{ printf("getID!CAN_MSG_BMS_STATUES_ID\n");break;};
-case CAN_MSG_VERSION_QUERY_ID:{ printf("getID!CAN_MSG_VERSION_QUERY_ID\n");break;};
-case CAN_MSG_PLATFORM_VERSION_ID:{ printf("getID!CAN_MSG_PLATFORM_VERSION_ID\n");break;};
-case CAN_MSG_CTRL_MODE_SELECT_ID:{ printf("getID!CAN_MSG_CTRL_MODE_SELECT_ID\n");break;};
-case CAN_MSG_STEER_NEUTRAL_RESET_ID:{ printf("getID!CAN_MSG_STEER_NEUTRAL_RESET_ID\n");break;};
-case CAN_MSG_STEER_NEUTRAL_RESET_ACK_ID:{ printf("getID!CAN_MSG_STEER_NEUTRAL_RESET_ACK_ID\n");break;};
-case CAN_MSG_STATE_RESET_ID:{ printf("getID!CAN_MSG_STATE_RESET_ID\n");break;};
 
 }
-
-}
-
-
-
-
-
 
 
 void Connector::unpack_all() //打印一次所有信息，调试专用函数
@@ -155,10 +151,11 @@ void Connector::unpack_all() //打印一次所有信息，调试专用函数
          //    memcpy(&mgs.raw, rec_buffer0+5,8 * sizeof(uint8_t));
       //   printf("%0x  \n",&(rec_buffer0[0]));
              copy_to_can_frame(can_frame_pt, &(rec_buffer0[0]));
-            for (int j{ 0 }; j <=12; ++j)
-                {
-                    printf("%0x  ",rec_buffer0[j]);
-                }
+             convert_data_once();
+//            for (int j{ 0 }; j <=12; ++j)
+//                {
+//                    printf("%0x  ",rec_buffer0[j]);
+//                }
 //                printf("****\n");
 //                   for (int j{ 0 }; j <=7; ++j)
 //                {
@@ -166,11 +163,11 @@ void Connector::unpack_all() //打印一次所有信息，调试专用函数
 //                   //printf("%0x  ",mgs.cmd);
 //
 //                }
-                printf("****\n");
-        //       printf("%0x ",can_frame_pt->can_id);
-
-                printf("end  \n");
-                sleep(1);
+//                printf("****\n");
+//        //       printf("%0x ",can_frame_pt->can_id);
+//
+//                printf("end  \n");
+//                sleep(1);
         }
 
 }

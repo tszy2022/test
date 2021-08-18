@@ -372,6 +372,55 @@ struct can_frame {//定义can结构
             uint8_t data[8] __attribute__((aligned(8)));
                 };
 
+#pragma pack(push, 1)
+typedef enum {//使用枚举变量定义通信信息种类
+  AgxMsgUnkonwn = 0x00,
+  // command
+  AgxMsgMotionCommand = 0x01,
+  AgxMsgLightCommand = 0x02,
+  AgxMsgCtrlModeSelect = 0x03,
+  AgxMsgFaultByteReset = 0x04,
+  AgxMsgParkModeSelect = 0x05,
+  // state feedback
+  AgxMsgSystemState = 0x21,
+  AgxMsgMotionState = 0x22,
+  AgxMsgLightState = 0x23,
+  AgxMsgRcState = 0x24,
+  AgxMsgActuatorHSState = 0x25,
+  AgxMsgActuatorLSState = 0x26,
+  AgxMsgOdometry = 0x27,
+  AgxMsgVersionQuery = 0x28,
+  AgxMsgPlatformVersion = 0x29,
+  AgxMsgBmsDate = 0x30,
+  AgxMsgBmsStatus = 0x31
+} MsgType;
+
+typedef struct {
+  MsgType type;
+  union {//使用联合控制某一时间只有一个信息有值
+    // command
+    MotionCommandMessage motion_command_msg;
+    LightCommandMessage light_command_msg;
+    CtrlModeSelectMessage ctrl_mode_select_msg;
+    StateResetMessage state_reset_msg;
+    ParkControlMessage park_control_msg;
+    // state feedback
+    SystemStateMessage system_state_msg;
+    MotionStateMessage motion_state_msg;
+    LightStateMessage light_state_msg;
+    RcStateMessage rc_state_msg;
+    ActuatorHSStateMessage actuator_hs_state_msg;
+    ActuatorLSStateMessage actuator_ls_state_msg;
+    OdometryMessage odometry_msg;
+    VersionQueryMessage version_query_msg;
+    PlatformVersionMessage platform_version_msg;
+    BMSDateMessage bms_date_msg;
+    BMSStatusMessage bms_status_msg;
+
+  } body;
+} AgxMessage;
+#pragma pack(pop)
+
 
 class Connector
 {
@@ -381,12 +430,13 @@ class Connector
         uint8_t rec_buffer0[13] {};
         can_frame canframe;
         can_frame* can_frame_pt{ &canframe };
+        AgxMessage agx_msg;
         LightStateMessage mgs;
         Connector();
         int init();
 
        void unpack_all();
-
+        void convert_data_once();
         void print();
         void printall();
          bool ConnectToServer(const char *serverip,const int port);
