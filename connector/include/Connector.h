@@ -481,6 +481,61 @@ typedef struct {
 } AgxMessage;
 #pragma pack(pop)
 
+struct ScoutLightCmd {
+  enum class LightMode {
+    CONST_OFF = 0x00,
+    CONST_ON = 0x01,
+    BREATH = 0x02,
+    CUSTOM = 0x03
+  };
+
+  ScoutLightCmd() = default;
+  ScoutLightCmd(LightMode f_mode, uint8_t f_value, LightMode r_mode,
+                uint8_t r_value)
+      : enable_ctrl(true),
+        front_mode(f_mode),
+        front_custom_value(f_value),
+        rear_mode(r_mode),
+        rear_custom_value(r_value) {}
+
+  bool enable_ctrl = false;
+  LightMode front_mode;
+  uint8_t front_custom_value;
+  LightMode rear_mode;
+  uint8_t rear_custom_value;
+};
+}  
+struct ScoutMotionCmd {
+  enum class FaultClearFlag
+  {
+      NO_FAULT = 0x00,
+      BAT_UNDER_VOL = 0x01,
+      BAT_OVER_VOL = 0x02,
+      MOTOR1_COMM = 0x03,
+      MOTOR2_COMM = 0x04,
+      MOTOR3_COMM = 0x05,
+      MOTOR4_COMM = 0x06,
+      MOTOR_DRV_OVERHEAT = 0x07,
+      MOTOR_OVERCURRENT = 0x08
+  };
+
+  ScoutMotionCmd(double linear = 0.0, double angular = 0.0,
+                 FaultClearFlag fault_clr_flag = FaultClearFlag::NO_FAULT)
+      : linear_velocity(linear), angular_velocity(angular),
+        fault_clear_flag(fault_clr_flag){}
+
+  double linear_velocity;
+  double angular_velocity;
+  double lateral_velocity;
+  FaultClearFlag fault_clear_flag;
+
+};
+struct ScoutCmdLimits {
+  static constexpr double max_linear_velocity = 1.5;       // 1.5 m/s
+  static constexpr double min_linear_velocity = -1.5;      // -1.5 m/s
+  static constexpr double max_angular_velocity = 0.5235;   // 0.5235 rad/s
+  static constexpr double min_angular_velocity = -0.5235;  // -0.5235 rad/s
+};
 
 class Connector
 {
@@ -494,6 +549,9 @@ class Connector
 		AgxMessage* agx_msg_pt{ &agx_msg };
 		ScoutState scout_state;
 		ScoutState* scout_state_pt{ &scout_state };
+		ScoutLightCmd scout_light_cmd;
+		ScoutMotionCmd scout_motion_cmd;
+		ScoutCmdLimits scout_cmd_limits;
         Connector();
         int init();
 		bool DecodeCanFrame(const struct can_frame *rx_frame, AgxMessage *msg) 
@@ -510,6 +568,7 @@ class Connector
   //桌面
         int Read(void *buf,const int buflen);
         void copy_to_can_frame(can_frame *rx_frame, uint8_t *msg);
+		void EncodeCanFrame(const AgxMessage *msg, struct can_frame *tx_frame);
         ~Connector();
     protected:
 

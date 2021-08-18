@@ -140,6 +140,125 @@ void Connector::printall()//打印一次所有信息，调试专用函数
 	
 
 }
+
+void Connector::EncodeCanFrame(const AgxMessage *msg, struct can_frame *tx_frame) 
+{  //将指令存储在tx_frame里面
+  switch (msg->type) {
+    // command frame
+    case AgxMsgMotionCommand: {
+      tx_frame->can_id = CAN_MSG_MOTION_COMMAND_ID;
+      tx_frame->can_dlc = 8;
+      memcpy(tx_frame->data, msg->body.motion_command_msg.raw,
+             tx_frame->can_dlc);
+      break;
+    }
+    case AgxMsgLightCommand: {
+      tx_frame->can_id = CAN_MSG_LIGHT_COMMAND_ID;
+      tx_frame->can_dlc = 8;
+      memcpy(tx_frame->data, msg->body.light_command_msg.raw,
+             tx_frame->can_dlc);
+      break;
+    }
+    case AgxMsgCtrlModeSelect: {
+      tx_frame->can_id = CAN_MSG_CTRL_MODE_SELECT_ID;
+      tx_frame->can_dlc = 8;
+      memcpy(tx_frame->data, msg->body.ctrl_mode_select_msg.raw,
+             tx_frame->can_dlc);
+      break;
+    }
+    case AgxMsgFaultByteReset: {
+      tx_frame->can_id = CAN_MSG_STATE_RESET_ID;
+      tx_frame->can_dlc = 8;
+      memcpy(tx_frame->data, msg->body.state_reset_msg.raw, tx_frame->can_dlc);
+      break;
+    }
+    // state feedback frame
+    case AgxMsgSystemState: {
+      tx_frame->can_id = CAN_MSG_SYSTEM_STATE_ID;
+      tx_frame->can_dlc = 8;
+      memcpy(tx_frame->data, msg->body.system_state_msg.raw, tx_frame->can_dlc);
+      break;
+    }
+    case AgxMsgMotionState: {
+      tx_frame->can_id = CAN_MSG_MOTION_STATE_ID;
+      tx_frame->can_dlc = 8;
+      memcpy(tx_frame->data, msg->body.motion_state_msg.raw, tx_frame->can_dlc);
+      break;
+    }
+    case AgxMsgLightState: {
+      tx_frame->can_id = CAN_MSG_LIGHT_STATE_ID;
+      tx_frame->can_dlc = 8;
+      memcpy(tx_frame->data, msg->body.light_state_msg.raw, tx_frame->can_dlc);
+      break;
+    }
+    case AgxMsgOdometry: {
+      tx_frame->can_id = CAN_MSG_ODOMETRY_ID;
+      tx_frame->can_dlc = 8;
+      memcpy(tx_frame->data, msg->body.odometry_msg.raw, tx_frame->can_dlc);
+      break;
+    }
+    case AgxMsgActuatorHSState: {
+      switch (msg->body.actuator_hs_state_msg.motor_id) {
+        case ACTUATOR1_ID: {
+          tx_frame->can_id = CAN_MSG_ACTUATOR1_HS_STATE_ID;
+          break;
+        }
+        case ACTUATOR2_ID: {
+          tx_frame->can_id = CAN_MSG_ACTUATOR2_HS_STATE_ID;
+          break;
+        }
+        case ACTUATOR3_ID: {
+          tx_frame->can_id = CAN_MSG_ACTUATOR3_HS_STATE_ID;
+          break;
+        }
+        case ACTUATOR4_ID: {
+          tx_frame->can_id = CAN_MSG_ACTUATOR4_HS_STATE_ID;
+          break;
+        }
+      }
+      tx_frame->can_dlc = 8;
+      memcpy(tx_frame->data, msg->body.actuator_hs_state_msg.data.raw,
+             tx_frame->can_dlc);
+      break;
+    }
+    case AgxMsgActuatorLSState: {
+      switch (msg->body.actuator_ls_state_msg.motor_id) {
+        case ACTUATOR1_ID: {
+          tx_frame->can_id = CAN_MSG_ACTUATOR1_LS_STATE_ID;
+          break;
+        }
+        case ACTUATOR2_ID: {
+          tx_frame->can_id = CAN_MSG_ACTUATOR2_LS_STATE_ID;
+          break;
+        }
+        case ACTUATOR3_ID: {
+          tx_frame->can_id = CAN_MSG_ACTUATOR3_LS_STATE_ID;
+          break;
+        }
+        case ACTUATOR4_ID: {
+          tx_frame->can_id = CAN_MSG_ACTUATOR4_LS_STATE_ID;
+          break;
+        }
+      }
+      tx_frame->can_dlc = 8;
+      memcpy(tx_frame->data, msg->body.actuator_ls_state_msg.data.raw,
+             tx_frame->can_dlc);
+      break;
+    }
+    case AgxMsgParkModeSelect: {
+      tx_frame->can_id = CAN_MSG_PARK_COMMAND_ID;
+      tx_frame->can_dlc = 8;
+      memcpy(tx_frame->data, msg->body.park_control_msg.raw, tx_frame->can_dlc);
+      break;
+    }
+    default:
+      break;
+  }
+  //   tx_frame->data[7] =
+  //       CalcCanFrameChecksum(tx_frame->can_id, tx_frame->data,
+  //       tx_frame->can_dlc);
+}
+
 void Connector::copy_to_can_frame(can_frame *rx_frame, uint8_t *msg)
 {
             ++msg;
@@ -350,7 +469,14 @@ void Connector::unpack_all() //打印一次所有信息，调试专用函数
         }
 //到此为止100个循环后读取数据并且打印
 }
-
+void Connector::cmd_test()
+{
+	//1m/s forward_iterator
+	double speed{10};
+	//第一步：将消息处理到Axgmessage里面，然后encode
+	//这一步需要使用send函数里面的解码和编辑功能，将scoutcmd类型输入到
+	//sendcmd里面后得到Axgmessage
+}
 bool Connector::DecodeCanFrame(const struct can_frame *rx_frame, AgxMessage *msg) 
 {
   msg->type = AgxMsgUnkonwn;
