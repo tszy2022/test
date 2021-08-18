@@ -1,0 +1,35 @@
+# depslib dependency file v1.0
+1629114459 source:/home/ponycandy/codeblocks/codeblock3/connector/main.cpp
+	<iostream>
+	"Connector.h"
+
+1629115789 /home/ponycandy/codeblocks/codeblock3/connector/include/Connector.h
+	<stdint.h>
+
+1629114423 source:/home/ponycandy/codeblocks/codeblock3/connector/src/Connector.cpp
+	"Connector.h"
+	<stdio.h>
+	<string.h>
+	<unistd.h>
+	<netdb.h>
+	<sys/types.h>
+	<sys/socket.h>
+	<arpa/inet.h>
+
+1629251971 source:/home/ubuntu/connector_project/connector/main.cpp
+	<iostream>
+	"Connector.h"
+
+1629251788 /home/ubuntu/connector_project/connector/include/Connector.h
+	<stdint.h>
+
+1629251428 source:/home/ubuntu/connector_project/connector/src/Connector.cpp
+	"Connector.h"
+	<stdio.h>
+	<string.h>
+	<unistd.h>
+	<netdb.h>
+	<sys/types.h>
+	<sys/socket.h>
+	<arpa/inet.h>
+
