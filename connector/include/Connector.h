@@ -366,14 +366,22 @@ typedef union {
 #pragma pack(pop)
 
 
-
+struct can_frame {//定义can结构
+            uint32_t can_id;
+            uint8_t can_dlc=8;
+            uint8_t data[8] __attribute__((aligned(8)));
+                };
 
 
 class Connector
 {
     public:
         int m_sockfd;
-
+        unsigned char rec_buffer[13] {};
+        uint8_t rec_buffer0[13] {};
+        can_frame canframe;
+        can_frame* can_frame_pt{ &canframe };
+        LightStateMessage mgs;
         Connector();
         int init();
 
@@ -388,6 +396,7 @@ class Connector
         int  Recv(void *buf,const int buflen);
   //桌面
         int Read(void *buf,const int buflen);
+        void copy_to_can_frame(can_frame *rx_frame, uint8_t *msg);
         ~Connector();
     protected:
 

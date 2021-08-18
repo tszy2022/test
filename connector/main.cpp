@@ -3,10 +3,13 @@
 //class Connector;
 int main()
 {
+    //uint8_t a[2] {0,1};
     Connector ioport;
     //ioport.print();
-   // ioport.init();
+    ioport.init();
     ioport.unpack_all();
+    //can_frame *pt=&ioport.canframe;
+    //ioport.copy_to_can_frame(pt,&a[0]);
    //ioport.unpack_all();
    //test_print_all_information(ioport);//打印所有信息
    // test_print("ang_vel",ioport);//获取指定信息
