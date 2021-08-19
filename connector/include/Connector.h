@@ -504,7 +504,7 @@ struct ScoutLightCmd {
   LightMode rear_mode;
   uint8_t rear_custom_value;
 };
-}  
+
 struct ScoutMotionCmd {
   enum class FaultClearFlag
   {
@@ -554,10 +554,10 @@ class Connector
 		ScoutCmdLimits scout_cmd_limits;
         Connector();
         int init();
-		bool DecodeCanFrame(const struct can_frame *rx_frame, AgxMessage *msg) 
+		bool DecodeCanFrame(const struct can_frame *rx_frame, AgxMessage *msg);
 
        void unpack_all();
-        void convert_data_once();
+        void convert_data_once(const AgxMessage &status_msg,ScoutState &state);
         void print();
         void printall();
          bool ConnectToServer(const char *serverip,const int port);
@@ -568,6 +568,8 @@ class Connector
   //桌面
         int Read(void *buf,const int buflen);
         void copy_to_can_frame(can_frame *rx_frame, uint8_t *msg);
+        void cmd_test();
+        void SetMotionCommand();
 		void EncodeCanFrame(const AgxMessage *msg, struct can_frame *tx_frame);
         ~Connector();
     protected:

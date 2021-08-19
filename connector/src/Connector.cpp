@@ -89,59 +89,59 @@ void Connector::printall()//打印一次所有信息，调试专用函数
 	printf("control_mode：%0x \n",scout_state.control_mode);
 	printf("fault_code：%0x \n",scout_state.fault_code);
 	printf("battery_voltage：%f volts \n",scout_state.battery_voltage);
-	printf("/n /n --motor state----------------------------------------segment-- /n /n");
-	
-	printf("FRONT_RIGHT motor_current：%f A \n",scout_state.actuator_states[FRONT_RIGHT].motor_current);
-	printf("FRONT_LEFT motor_current：%f A \n",scout_state.actuator_states[FRONT_LEFT].motor_current);
-	printf("REAR_LEFT motor_current：%f A \n",scout_state.actuator_states[REAR_LEFT].motor_current);
-	printf("REAR_RIGHT motor_current：%f A \n",scout_state.actuator_states[REAR_RIGHT].motor_current);
+	printf("\n \n --motor state----------------------------------------segment-- \n \n");
 
-	printf("FRONT_RIGHT motor_rpm：%f  \n",scout_state.actuator_states[FRONT_RIGHT].motor_rpm);
-	printf("FRONT_LEFT motor_rpm：%f  \n",scout_state.actuator_states[FRONT_LEFT].motor_rpm);
-	printf("REAR_LEFT motor_rpm：%f  \n",scout_state.actuator_states[REAR_LEFT].motor_rpm);
-	printf("REAR_RIGHT motor_rpm：%f  \n",scout_state.actuator_states[REAR_RIGHT].motor_rpm);
-	
-	printf("FRONT_LEFT motor_rpm：%f  \n",scout_state.actuator_states[FRONT_LEFT].motor_rpm);
-	printf("FRONT_LEFT motor_rpm：%f  \n",scout_state.actuator_states[FRONT_LEFT].motor_rpm);
-	printf("FRONT_LEFT motor_rpm：%f  \n",scout_state.actuator_states[FRONT_LEFT].motor_rpm);
-	printf("FRONT_LEFT motor_rpm：%f  \n",scout_state.actuator_states[FRONT_LEFT].motor_rpm);
-	
-	
-	printf("FRONT_LEFT driver_voltage：%f V \n",scout_state.actuator_states[FRONT_LEFT].driver_voltage);
-	printf("FRONT_LEFT driver_voltage：%f V \n",scout_state.actuator_states[FRONT_LEFT].driver_voltage);
-	printf("FRONT_LEFT driver_voltage：%f V \n",scout_state.actuator_states[FRONT_LEFT].driver_voltage);
-	printf("FRONT_LEFT driver_voltage：%f V \n",scout_state.actuator_states[FRONT_LEFT].driver_voltage);
-	
-	printf("/n /n --light state----------------------------------------segment-- /n /n");
+	printf("FRONT_RIGHT motor_current：%f A \n",scout_state.actuator_states[0].motor_current);
+	printf("FRONT_LEFT motor_current：%f A \n",scout_state.actuator_states[1].motor_current);
+	printf("REAR_LEFT motor_current：%f A \n",scout_state.actuator_states[2].motor_current);
+	printf("REAR_RIGHT motor_current：%f A \n",scout_state.actuator_states[3].motor_current);
 
-	printf("light_control_enabled %d \n",scout_state.light_control_enabled);	
-	printf("front_light_state mode:%0x   ***** custom_value:%0x  \n ",scout_state.front_light_state.mode,scout_state.front_light_state.custom_value);	
-	printf("rear_light_state mode:%0x   ***** custom_value:%0x  \n ",scout_state.rear_light_state.mode,scout_state.rear_light_state.custom_value);		
-		
-	printf("/n /n --motion state----------------------------------------segment-- /n /n");
+	printf("FRONT_RIGHT motor_rpm：%f  \n",scout_state.actuator_states[0].motor_rpm);
+	printf("FRONT_LEFT motor_rpm：%f  \n",scout_state.actuator_states[1].motor_rpm);
+	printf("REAR_LEFT motor_rpm：%f  \n",scout_state.actuator_states[2].motor_rpm);
+	printf("REAR_RIGHT motor_rpm：%f  \n",scout_state.actuator_states[3].motor_rpm);
+
+	printf("FRONT_LEFT motor_rpm：%f  \n",scout_state.actuator_states[0].motor_rpm);
+	printf("FRONT_LEFT motor_rpm：%f  \n",scout_state.actuator_states[1].motor_rpm);
+	printf("FRONT_LEFT motor_rpm：%f  \n",scout_state.actuator_states[2].motor_rpm);
+	printf("FRONT_LEFT motor_rpm：%f  \n",scout_state.actuator_states[3].motor_rpm);
+
+
+	printf("FRONT_LEFT driver_voltage：%f V \n",scout_state.actuator_states[0].driver_voltage);
+	printf("FRONT_LEFT driver_voltage：%f V \n",scout_state.actuator_states[1].driver_voltage);
+	printf("FRONT_LEFT driver_voltage：%f V \n",scout_state.actuator_states[2].driver_voltage);
+	printf("FRONT_LEFT driver_voltage：%f V \n",scout_state.actuator_states[3].driver_voltage);
+
+	printf("\n \n --light state----------------------------------------segment-- \n \n");
+
+	printf("light_control_enabled %d \n",scout_state.light_control_enabled);
+	printf("front_light_state mode:%0x   ***** custom_value:%0x  \n ",scout_state.front_light_state.mode,scout_state.front_light_state.custom_value);
+	printf("rear_light_state mode:%0x   ***** custom_value:%0x  \n ",scout_state.rear_light_state.mode,scout_state.rear_light_state.custom_value);
+
+	printf("\n \n --motion state----------------------------------------segment-- \n \n");
 	printf("linear_vel:%f m/s \n",scout_state.linear_velocity);
 	printf("angular_velocity:%f rad/s \n",scout_state.angular_velocity);
-	
-	printf("/n /n --odometer state----------------------------------------segment-- /n /n");
+
+	printf("\n \n --odometer state----------------------------------------segment-- \n \n");
 	printf("left_odometry:%f m right_odometry:%f m \n",scout_state.left_odometry,scout_state.right_odometry);
 
-	printf("/n /n --BMS state----------------------------------------segment-- /n /n");
-	printf("bms_battery_voltage:%f V \n",scout_state.bms_battery_voltage);
-	printf("battery_current:%f A \n");
+	printf("\n \n --BMS state----------------------------------------segment-- \n \n");
+	printf("bms_battery_voltage:%d V \n",scout_state.bms_battery_voltage);
+	printf("battery_current:%f A \n",scout_state.battery_current);
 
-	printf("/n /n --temperature----------------------------------------segment-- /n /n");
-	printf("FRONT_RIGHT motor_temperature:%f  \n",scout_state.actuator_states[FRONT_RIGHT].motor_temperature);
-	printf("FRONT_LEFT motor_temperature:%f  \n",scout_state.actuator_states[FRONT_LEFT].motor_temperature);
-	printf("REAR_LEFT motor_temperature:%f  \n",scout_state.actuator_states[REAR_LEFT].motor_temperature);
-	printf("REAR_RIGHT motor_temperature:%f  \n",scout_state.actuator_states[REAR_RIGHT].motor_temperature);
+	printf("\n \n --temperature----------------------------------------segment-- \n \n");
+	printf("FRONT_RIGHT motor_temperature:%f  \n",scout_state.actuator_states[0].motor_temperature);
+	printf("FRONT_LEFT motor_temperature:%f  \n",scout_state.actuator_states[1].motor_temperature);
+	printf("REAR_LEFT motor_temperature:%f  \n",scout_state.actuator_states[2].motor_temperature);
+	printf("REAR_RIGHT motor_temperature:%f  \n",scout_state.actuator_states[3].motor_temperature);
 
 	printf("battery_temperature:%f \n",scout_state.battery_temperature);
-	
-	
+
+
 
 }
 
-void Connector::EncodeCanFrame(const AgxMessage *msg, struct can_frame *tx_frame) 
+void Connector::EncodeCanFrame(const AgxMessage *msg, struct can_frame *tx_frame)
 {  //将指令存储在tx_frame里面
   switch (msg->type) {
     // command frame
@@ -309,10 +309,10 @@ void Connector::copy_to_can_frame(can_frame *rx_frame, uint8_t *msg)
 
 
 void Connector::convert_data_once(const AgxMessage &status_msg,ScoutState &state)
-                                 ScoutState &state)
+//将status转换为scout类型到数据
 
 {
-switch (status_msg.type) 
+switch (status_msg.type)
  {
     case AgxMsgSystemState: {
       // std::cout << "system status feedback received" << std::endl;
@@ -449,7 +449,7 @@ void Connector::unpack_all() //打印一次所有信息，调试专用函数
 			 DecodeCanFrame(can_frame_pt, agx_msg_pt);
              convert_data_once(agx_msg,scout_state);
 			 //上面三步之后，所有状态储存在scout_state里面
-			 
+
 //            for (int j{ 0 }; j <=12; ++j)
 //                {
 //                    printf("%0x  ",rec_buffer0[j]);
@@ -467,17 +467,21 @@ void Connector::unpack_all() //打印一次所有信息，调试专用函数
 //                printf("end  \n");
 //                sleep(1);
         }
-//到此为止100个循环后读取数据并且打印
+        printall();
+
 }
+
 void Connector::cmd_test()
 {
-	//1m/s forward_iterator
-	double speed{10};
-	//第一步：将消息处理到Axgmessage里面，然后encode
-	//这一步需要使用send函数里面的解码和编辑功能，将scoutcmd类型输入到
-	//sendcmd里面后得到Axgmessage
+//灯光控制指令
+
+
+//
+
+
+
 }
-bool Connector::DecodeCanFrame(const struct can_frame *rx_frame, AgxMessage *msg) 
+bool Connector::DecodeCanFrame(const struct can_frame *rx_frame, AgxMessage *msg)
 {
   msg->type = AgxMsgUnkonwn;
 
@@ -578,4 +582,3 @@ bool Connector::DecodeCanFrame(const struct can_frame *rx_frame, AgxMessage *msg
 
   return true;
 }
-
