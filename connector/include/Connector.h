@@ -550,7 +550,7 @@ class Connector
 		ScoutState scout_state;
 		ScoutState* scout_state_pt{ &scout_state };
 		ScoutLightCmd scout_light_cmd;
-		ScoutMotionCmd scout_motion_cmd;
+		ScoutMotionCmd current_motion_cmd_;
 		ScoutCmdLimits scout_cmd_limits;
         Connector();
         int init();
@@ -567,12 +567,14 @@ class Connector
         int  Recv(void *buf,const int buflen);
   //桌面
         int Read(void *buf,const int buflen);
+        int Write(void *buf,const int buflen);
         void copy_to_can_frame(can_frame *rx_frame, uint8_t *msg);
         void copy_to_buffer(can_frame *rx_frame);
         void cmd_test();
         void SetMotionCommand();
         void SendLightCmd(const ScoutLightCmd &lcmd, uint8_t count);
         void SetLightCommand(const ScoutLightCmd &cmd);
+        void SendMotionCmd();
 		void EncodeCanFrame(const AgxMessage *msg, struct can_frame *tx_frame);
         ~Connector();
     protected:

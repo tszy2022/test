@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <mutex>
 
 
 Connector::Connector()
@@ -56,6 +57,11 @@ int Connector::Read(void *buf,const int buflen)
 {
   return read(m_sockfd,buf,buflen);
 }
+int Connector::Write(void *buf,const int buflen)
+{
+  return write(m_sockfd,buf,buflen);
+}
+
 int Connector::init()
 {
 
@@ -77,6 +83,7 @@ unsigned char strbuffer2[13]={0x08,0x00,0x00,0x01,0x21,0x01,0x01,0x05,0x01,0x05,
     Send(strbuffer1,13);
    sleep(1);
     Send(strbuffer2,13);
+    sleep(1);
    printf("initialization completed. \n");
    return 1;
     }
@@ -141,9 +148,11 @@ void Connector::printall()//打印一次所有信息，调试专用函数
 
 }
 
+
+
 void Connector::EncodeCanFrame(const AgxMessage *msg, struct can_frame *tx_frame)
-{  //将指令存储在tx_frame里面
-  switch (msg->type) {
+{//将msg中的信息传入到要发送的can_frame中
+  switch (msg->type) {//判定通信种类，，根据不同的信息种类，将msg中的不同信息传递到can_frame中，并位canid赋值
     // command frame
     case AgxMsgMotionCommand: {
       tx_frame->can_id = CAN_MSG_MOTION_COMMAND_ID;
@@ -159,11 +168,11 @@ void Connector::EncodeCanFrame(const AgxMessage *msg, struct can_frame *tx_frame
              tx_frame->can_dlc);
       break;
     }
-    case AgxMsgCtrlModeSelect: {
+    case AgxMsgCtrlModeSelect: {//根据can通讯的种类确定canid的种类
       tx_frame->can_id = CAN_MSG_CTRL_MODE_SELECT_ID;
-      tx_frame->can_dlc = 8;
+      tx_frame->can_dlc = 8;//帧长度
       memcpy(tx_frame->data, msg->body.ctrl_mode_select_msg.raw,
-             tx_frame->can_dlc);
+             tx_frame->can_dlc);//为数组赋值，将要传递的信息录入can框架中
       break;
     }
     case AgxMsgFaultByteReset: {
@@ -258,7 +267,6 @@ void Connector::EncodeCanFrame(const AgxMessage *msg, struct can_frame *tx_frame
   //       CalcCanFrameChecksum(tx_frame->can_id, tx_frame->data,
   //       tx_frame->can_dlc);
 }
-
 void Connector::copy_to_can_frame(can_frame *rx_frame, uint8_t *msg)
 {
             ++msg;
@@ -271,70 +279,32 @@ void Connector::copy_to_can_frame(can_frame *rx_frame, uint8_t *msg)
             {
                 rx_frame->data[count]=msg[count+4];
             }
-//                    for(int count{0};count<=7;++count)
-//            {
-//              printf("%0x ",rx_frame->data[count]);
-//            }
-
-//switch (rx_frame->can_id)
-//{
-//case CAN_MSG_MOTION_COMMAND_ID:{ printf("getID!CAN_MSG_MOTION_COMMAND_ID\n");break;};
-//case CAN_MSG_LIGHT_COMMAND_ID:{ printf("getID!CAN_MSG_LIGHT_COMMAND_ID\n");break;};
-//case CAN_MSG_PARK_COMMAND_ID:{ printf("getID!CAN_MSG_PARK_COMMAND_ID\n");break;};
-//case CAN_MSG_SYSTEM_STATE_ID:{ printf("getID!CAN_MSG_SYSTEM_STATE_ID\n");break;};
-//case CAN_MSG_MOTION_STATE_ID:{ printf("getID!CAN_MSG_MOTION_STATE_ID\n");break;};
-//case CAN_MSG_LIGHT_STATE_ID:{ printf("getID!CAN_MSG_LIGHT_STATE_ID\n");break;};
-//case CAN_MSG_RC_STATE_ID:{ printf("getID!CAN_MSG_RC_STATE_ID\n");break;};
-//case CAN_MSG_ACTUATOR1_HS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR1_HS_STATE_ID\n");break;};
-//case CAN_MSG_ACTUATOR2_HS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR2_HS_STATE_ID\n");break;};
-//case CAN_MSG_ACTUATOR3_HS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR3_HS_STATE_ID\n");break;};
-//case CAN_MSG_ACTUATOR4_HS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR4_HS_STATE_ID\n");break;};
-//case CAN_MSG_ACTUATOR1_LS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR1_LS_STATE_ID\n");break;};
-//case CAN_MSG_ACTUATOR2_LS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR2_LS_STATE_ID\n");break;};
-//case CAN_MSG_ACTUATOR3_LS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR3_LS_STATE_ID\n");break;};
-//case CAN_MSG_ACTUATOR4_LS_STATE_ID:{ printf("getID!CAN_MSG_ACTUATOR4_LS_STATE_ID\n");break;};
-//case CAN_MSG_ODOMETRY_ID:{ printf("getID!CAN_MSG_ODOMETRY_ID\n");break;};
-//case CAN_MSG_BMS_DATE_ID:{ printf("getID!CAN_MSG_BMS_DATE_ID\n");break;};
-//case CAN_MSG_BMS_STATUES_ID:{ printf("getID!CAN_MSG_BMS_STATUES_ID\n");break;};
-//case CAN_MSG_VERSION_QUERY_ID:{ printf("getID!CAN_MSG_VERSION_QUERY_ID\n");break;};
-//case CAN_MSG_PLATFORM_VERSION_ID:{ printf("getID!CAN_MSG_PLATFORM_VERSION_ID\n");break;};
-//case CAN_MSG_CTRL_MODE_SELECT_ID:{ printf("getID!CAN_MSG_CTRL_MODE_SELECT_ID\n");break;};
-//case CAN_MSG_STEER_NEUTRAL_RESET_ID:{ printf("getID!CAN_MSG_STEER_NEUTRAL_RESET_ID\n");break;};
-//case CAN_MSG_STEER_NEUTRAL_RESET_ACK_ID:{ printf("getID!CAN_MSG_STEER_NEUTRAL_RESET_ACK_ID\n");break;};
-//case CAN_MSG_STATE_RESET_ID:{ printf("getID!CAN_MSG_STATE_RESET_ID\n");break;};
-//
-//}
 
 }
-
-
-void Connector::convert_data_once(const AgxMessage &status_msg,ScoutState &state)
-//将status转换为scout类型到数据
-
+void Connector::convert_data_once(const AgxMessage &status_msg,ScoutState &state)//将status转换为scout类型到数据
 {
-switch (status_msg.type)
- {
-    case AgxMsgSystemState: {
+  switch (status_msg.type) {//根据msg的种类确定进行什么操作
+    case AgxMsgSystemState: {//如果回馈的是系统信息
       // std::cout << "system status feedback received" << std::endl;
-      const SystemStateMessage &msg = status_msg.body.system_state_msg;
-      state.control_mode = msg.state.control_mode;
+      const SystemStateMessage &msg = status_msg.body.system_state_msg;//定义一个msg结构继承传来的信息内容
+      state.control_mode = msg.state.control_mode;//用得到的信息更新系统状态
       state.base_state = msg.state.vehicle_state;
       state.battery_voltage =
           (static_cast<uint16_t>(msg.state.battery_voltage.low_byte) |
            static_cast<uint16_t>(msg.state.battery_voltage.high_byte) << 8) /
-          10.0;
+          10.0;//把八位的两字节电池典雅信息转变为电池的实际电压
       state.fault_code = msg.state.fault_code;
       break;
     }
-    case AgxMsgMotionState: {
+    case AgxMsgMotionState: {//如果回馈的是运动信息
       // std::cout << "motion control feedback received" << std::endl;
       const MotionStateMessage &msg = status_msg.body.motion_state_msg;
-      state.linear_velocity =
+      state.linear_velocity =//更新速度信息
           static_cast<int16_t>(
               static_cast<uint16_t>(msg.state.linear_velocity.low_byte) |
               static_cast<uint16_t>(msg.state.linear_velocity.high_byte) << 8) /
           1000.0;
-      state.angular_velocity =
+      state.angular_velocity =//更新角速度信息
           static_cast<int16_t>(
               static_cast<uint16_t>(msg.state.angular_velocity.low_byte) |
               static_cast<uint16_t>(msg.state.angular_velocity.high_byte)
@@ -342,27 +312,27 @@ switch (status_msg.type)
           1000.0;
       break;
     }
-    case AgxMsgLightState: {
+    case AgxMsgLightState: {//如果回馈的是灯的控制信息
       // std::cout << "light control feedback received" << std::endl;
       const LightStateMessage &msg = status_msg.body.light_state_msg;
       if (msg.state.light_ctrl_enabled == LIGHT_CTRL_DISABLE)
         state.light_control_enabled = false;
       else
-        state.light_control_enabled = true;
+        state.light_control_enabled = true;//更新状态信息
       state.front_light_state.mode = msg.state.front_light_mode;
       state.front_light_state.custom_value = msg.state.front_light_custom;
       state.rear_light_state.mode = msg.state.rear_light_mode;
       state.rear_light_state.custom_value = msg.state.rear_light_custom;
       break;
     }
-    case AgxMsgActuatorHSState: {
+    case AgxMsgActuatorHSState: {//如果回馈的是电机的信息
       // std::cout << "actuator hs feedback received" << std::endl;
       const ActuatorHSStateMessage &msg = status_msg.body.actuator_hs_state_msg;
-      state.actuator_states[msg.motor_id].motor_current =
+      state.actuator_states[msg.motor_id].motor_current =//更新电机电流
           (static_cast<uint16_t>(msg.data.state.current.low_byte) |
            static_cast<uint16_t>(msg.data.state.current.high_byte) << 8) /
           10.0;
-      state.actuator_states[msg.motor_id].motor_rpm = static_cast<int16_t>(
+      state.actuator_states[msg.motor_id].motor_rpm = static_cast<int16_t>(//更新电机转速
           static_cast<uint16_t>(msg.data.state.rpm.low_byte) |
           static_cast<uint16_t>(msg.data.state.rpm.high_byte) << 8);
       state.actuator_states[msg.motor_id].motor_pulses = static_cast<int32_t>(
@@ -372,17 +342,17 @@ switch (status_msg.type)
           static_cast<uint32_t>(msg.data.state.pulse_count.msb) << 24);
       break;
     }
-    case AgxMsgActuatorLSState: {
+    case AgxMsgActuatorLSState: {//如果回馈的是电机信息
       // std::cout << "actuator ls feedback received" << std::endl;
       const ActuatorLSStateMessage &msg = status_msg.body.actuator_ls_state_msg;
       for (int i = 0; i < 2; ++i) {
-        state.actuator_states[msg.motor_id].driver_voltage =
+        state.actuator_states[msg.motor_id].driver_voltage =//更新电机驱动电压
             (static_cast<uint16_t>(msg.data.state.driver_voltage.low_byte) |
              static_cast<uint16_t>(msg.data.state.driver_voltage.high_byte)
                  << 8) /
             10.0;
         state.actuator_states[msg.motor_id]
-            .driver_temperature = static_cast<int16_t>(
+            .driver_temperature = static_cast<int16_t>(//更新电机温度
             static_cast<uint16_t>(msg.data.state.driver_temperature.low_byte) |
             static_cast<uint16_t>(msg.data.state.driver_temperature.high_byte)
                 << 8);
@@ -393,7 +363,7 @@ switch (status_msg.type)
       }
       break;
     }
-    case AgxMsgOdometry: {
+    case AgxMsgOdometry: {//如果获取的是里程计信息
       // std::cout << "Odometer msg feedback received" << std::endl;
       const OdometryMessage &msg = status_msg.body.odometry_msg;
       state.right_odometry = static_cast<int32_t>(
@@ -408,7 +378,7 @@ switch (status_msg.type)
           (static_cast<uint32_t>(msg.state.left_wheel.msb) << 24));
       break;
     }
-    case AgxMsgBmsDate: {
+    case AgxMsgBmsDate: {//如果获取的电池信息
       // std::cout << "Odometer msg feedback received" << std::endl;
       const BMSDateMessage &msg = status_msg.body.bms_date_msg;
       state.SOC = msg.state.battery_SOC;
@@ -424,7 +394,7 @@ switch (status_msg.type)
             (static_cast<uint16_t>(msg.state.battery_temperature.high_byte) << 8));
       break;
     }
-    case AgxMsgBmsStatus: {
+    case AgxMsgBmsStatus: {//如果获取的使滇池的报警信息
       // std::cout << "Odometer msg feedback received" << std::endl;
       const BMSStatusMessage &msg = status_msg.body.bms_status_msg;
       state.Alarm_Status_1 = msg.state.Alarm_Status_1;
@@ -503,7 +473,7 @@ void Connector::SendLightCmd(const ScoutLightCmd &lcmd, uint8_t count)
   copy_to_buffer(&l_frame);//将can信息以流的形式发送
 }
  void Connector::copy_to_buffer(can_frame *rx_frame)
- {
+{
      uint8_t buf[13] {0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 for(int i=0;i<=7;++i)
 {
@@ -521,9 +491,9 @@ for(int i=0;i<=12;++i)
 {
     printf("%2x \n",buf[i]);
 }
+sleep(0.5);
 
  }
-
 void Connector::cmd_test()
 {
 //灯光控制指令,所有指令按照以下标准赋值，不要按照ugvsdk里面到代码赋值
@@ -531,15 +501,59 @@ ScoutLightCmd cmd {};
 cmd.enable_ctrl=1;
 cmd.front_mode=ScoutLightCmd::LightMode::BREATH;
 cmd.rear_mode=ScoutLightCmd::LightMode::BREATH;
-cmd.front_custom_value=0x02;
-cmd.rear_custom_value=0x00;
+cmd.front_custom_value=0x01;
+cmd.rear_custom_value=0x01;
 SetLightCommand(cmd);
-printf("finish sending \n");
-//
+printf("finish sending Lightcmd \n");
+//定义运动控制参数
+//定义控制指令类对象
+current_motion_cmd_.angular_velocity=0;
+current_motion_cmd_.linear_velocity=1;
+SendMotionCmd();
 
 
+printf("finish sending motioncmd \n");
 
 }
+void Connector::SendMotionCmd()
+{//定义运动控制指令发送函数
+  // motion control message
+  AgxMessage m_msg;//定义msg
+  m_msg.type = AgxMsgMotionCommand;//选择can'通信种类为运动控制
+ // memset(m_msg.body.motion_command_msg.raw, 0, 8);//初始化参信息
+
+  //motion_cmd_mutex_.lock();//上锁保证在进行如下操作的时候相关的变量值不会被其他进程修改
+  int16_t linear_cmd =
+      static_cast<int16_t>(current_motion_cmd_.linear_velocity * 1000);//将线速度和角速度转变为can协议定义的数值
+  int16_t angular_cmd =
+      static_cast<int16_t>(current_motion_cmd_.angular_velocity * 1000);
+  int16_t lateral_cmd =
+      static_cast<int16_t>(current_motion_cmd_.lateral_velocity * 1000);
+  //motion_cmd_mutex_.unlock();//解索
+
+  // SendControlCmd();
+  m_msg.body.motion_command_msg.cmd.linear_velocity.high_byte =//把上面得到的十六位速度信息转变为量子节的把为速度信息
+      (static_cast<uint16_t>(linear_cmd) >> 8) & 0x00ff;
+  m_msg.body.motion_command_msg.cmd.linear_velocity.low_byte =
+      (static_cast<uint16_t>(linear_cmd) >> 0) & 0x00ff;
+  m_msg.body.motion_command_msg.cmd.angular_velocity.high_byte =
+      (static_cast<uint16_t>(angular_cmd) >> 8) & 0x00ff;
+  m_msg.body.motion_command_msg.cmd.angular_velocity.low_byte =
+      (static_cast<uint16_t>(angular_cmd) >> 0) & 0x00ff;
+  m_msg.body.motion_command_msg.cmd.lateral_velocity.high_byte =
+      (static_cast<uint16_t>(lateral_cmd) >> 8) & 0x00ff;
+  m_msg.body.motion_command_msg.cmd.lateral_velocity.low_byte =
+      (static_cast<uint16_t>(lateral_cmd) >> 0) & 0x00ff;
+
+  // send to can bus
+  can_frame m_frame;//定义can框架对象
+  EncodeCanFrame(&m_msg, &m_frame);//打包can信息
+  copy_to_buffer(&m_frame);
+}
+
+
+
+
 bool Connector::DecodeCanFrame(const struct can_frame *rx_frame, AgxMessage *msg)
 {
   msg->type = AgxMsgUnkonwn;
