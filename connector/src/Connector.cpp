@@ -97,12 +97,18 @@ void Connector::start_Read_thread()
         Read(rec_buffer0,sizeof(rec_buffer0));
         copy_to_can_frame(can_frame_pt, &(rec_buffer0[0]));
         DecodeCanFrame(can_frame_pt, agx_msg_pt);
+        //上锁
+        const std::lock_guard<std::mutex> lock(scout_state_mutex);
         convert_data_once(agx_msg,scout_state);
+        const std::lock_guard<std::mutex> unlock(scout_state_mutex);
+        //解锁
     }
 
 }
 void Connector::printall()//打印一次所有信息，调试专用函数
 {
+     const std::lock_guard<std::mutex> lock(scout_state_mutex);
+     //读取之前防止翻转状态，上锁
 	printf("display current state: \n");
 	printf("base_state：%0x \n",scout_state.base_state);
 	printf("control_mode：%0x \n",scout_state.control_mode);
@@ -157,7 +163,8 @@ void Connector::printall()//打印一次所有信息，调试专用函数
 	printf("battery_temperature:%f \n",scout_state.battery_temperature);
 
 
-
+//读取之后解锁
+    const std::lock_guard<std::mutex> unlock(scout_state_mutex);
 }
 
 

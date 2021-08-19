@@ -2,6 +2,7 @@
 #define CONNECTOR_H
 
 #include <stdint.h>
+#include <mutex>
 
 #define ACTUATOR1_ID ((uint8_t)0x00)
 #define ACTUATOR2_ID ((uint8_t)0x01)
@@ -543,6 +544,7 @@ class Connector
         int m_sockfd;
         unsigned char rec_buffer[13] {};
         uint8_t rec_buffer0[13] {};
+        std::mutex scout_state_mutex;
         can_frame canframe;
         can_frame* can_frame_pt{ &canframe };
         AgxMessage agx_msg;

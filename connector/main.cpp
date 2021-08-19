@@ -7,12 +7,20 @@ int main()
     Connector ioport;
     //ioport.print();
     ioport.init();
+    while(1)
+    {
+        ioport.printall();
+        sleep(1);
+        printf("\e[1;1H\e[2J");
+    }
+
+
     //ioport.unpack_all();
     //ioport.cmd_test();
     //can_frame *pt=&ioport.canframe;
     //ioport.copy_to_can_frame(pt,&a[0]);
    //ioport.unpack_all();
-   test_print_all_information(ioport);//打印所有信息
+   //test_print_all_information(ioport);//打印所有信息
    //打印指定信息自行在scout——state中获取
    // test_print("ang_vel",ioport);//获取指定信息
    // test_print("lin_vel",ioport);//获取指定信息
