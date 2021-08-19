@@ -7,7 +7,7 @@ int main()
     Connector ioport;
     //ioport.print();
     ioport.init();
-    ioport.unpack_all();
+    //ioport.unpack_all();
     ioport.cmd_test();
     //can_frame *pt=&ioport.canframe;
     //ioport.copy_to_can_frame(pt,&a[0]);

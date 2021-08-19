@@ -568,8 +568,11 @@ class Connector
   //桌面
         int Read(void *buf,const int buflen);
         void copy_to_can_frame(can_frame *rx_frame, uint8_t *msg);
+        void copy_to_buffer(can_frame *rx_frame);
         void cmd_test();
         void SetMotionCommand();
+        void SendLightCmd(const ScoutLightCmd &lcmd, uint8_t count);
+        void SetLightCommand(const ScoutLightCmd &cmd);
 		void EncodeCanFrame(const AgxMessage *msg, struct can_frame *tx_frame);
         ~Connector();
     protected:

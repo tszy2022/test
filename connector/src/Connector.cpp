@@ -470,12 +470,71 @@ void Connector::unpack_all() //打印一次所有信息，调试专用函数
         printall();
 
 }
+void Connector::SetLightCommand(const ScoutLightCmd &cmd)
+{
+  static uint8_t light_cmd_count = 0;
+  SendLightCmd(cmd, light_cmd_count++);
+}
+void Connector::SendLightCmd(const ScoutLightCmd &lcmd, uint8_t count)
+{//将灯的控制命令传递给msg，然后填充入can框架中，最后以流的形式发送
+  AgxMessage l_msg;//定义一个msg类对象
+  l_msg.type = AgxMsgLightCommand;//定义通信功能种类
+  memset(l_msg.body.light_command_msg.raw, 0, 8);//初始化数组
+
+  if (lcmd.enable_ctrl) {//如果can控制使能
+    l_msg.body.light_command_msg.cmd.light_ctrl_enabled = LIGHT_CTRL_ENABLE;
+
+    l_msg.body.light_command_msg.cmd.front_light_mode =//将cmd中的控制指令传递到msg中
+        static_cast<uint8_t>(lcmd.front_mode);
+    l_msg.body.light_command_msg.cmd.front_light_custom =
+        lcmd.front_custom_value;
+    l_msg.body.light_command_msg.cmd.rear_light_mode =
+        static_cast<uint8_t>(lcmd.rear_mode);
+    l_msg.body.light_command_msg.cmd.rear_light_custom = lcmd.rear_custom_value;
+  } else {
+    l_msg.body.light_command_msg.cmd.light_ctrl_enabled = LIGHT_CTRL_DISABLE;
+  }
+
+  l_msg.body.light_command_msg.cmd.count = count;
+
+  // send to can bus
+  can_frame l_frame;//把msg填充到参框架中
+  EncodeCanFrame(&l_msg, &l_frame);
+  copy_to_buffer(&l_frame);//将can信息以流的形式发送
+}
+ void Connector::copy_to_buffer(can_frame *rx_frame)
+ {
+     uint8_t buf[13] {0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+for(int i=0;i<=7;++i)
+{
+buf[i+5]=rx_frame->data[i];
+}
+uint32_t pt0;
+pt0=rx_frame->can_id;
+char* pt{(char*)&pt0};
+buf[1]=pt[3];
+buf[2]=pt[2];
+buf[3]=pt[1];
+buf[4]=pt[0];
+Send(buf,13);
+for(int i=0;i<=12;++i)
+{
+    printf("%2x \n",buf[i]);
+}
+
+ }
 
 void Connector::cmd_test()
 {
-//灯光控制指令
-
-
+//灯光控制指令,所有指令按照以下标准赋值，不要按照ugvsdk里面到代码赋值
+ScoutLightCmd cmd {};
+cmd.enable_ctrl=1;
+cmd.front_mode=ScoutLightCmd::LightMode::BREATH;
+cmd.rear_mode=ScoutLightCmd::LightMode::BREATH;
+cmd.front_custom_value=0x02;
+cmd.rear_custom_value=0x00;
+SetLightCommand(cmd);
+printf("finish sending \n");
 //
 
 
