@@ -555,7 +555,7 @@ class Connector
         Connector();
         int init();
 		bool DecodeCanFrame(const struct can_frame *rx_frame, AgxMessage *msg);
-
+        void start_Read_thread();
        void unpack_all();
         void convert_data_once(const AgxMessage &status_msg,ScoutState &state);
         void print();

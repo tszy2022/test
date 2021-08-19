@@ -7,7 +7,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <mutex>
-
+#include <thread>
 
 Connector::Connector()
 {
@@ -87,8 +87,20 @@ unsigned char strbuffer2[13]={0x08,0x00,0x00,0x01,0x21,0x01,0x01,0x05,0x01,0x05,
    printf("initialization completed. \n");
    return 1;
     }
-}
 
+    std::thread(&Connector::start_Read_thread, this);
+}
+void Connector::start_Read_thread()
+{
+    while(1)
+    {
+        Read(rec_buffer0,sizeof(rec_buffer0));
+        copy_to_can_frame(can_frame_pt, &(rec_buffer0[0]));
+        DecodeCanFrame(can_frame_pt, agx_msg_pt);
+        convert_data_once(agx_msg,scout_state);
+    }
+
+}
 void Connector::printall()//打印一次所有信息，调试专用函数
 {
 	printf("display current state: \n");
