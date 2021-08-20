@@ -1,5 +1,6 @@
 #include <iostream>
 #include "Connector.h"
+#include <unistd.h>
 //class Connector;
 int main()
 {
@@ -7,16 +8,16 @@ int main()
     Connector ioport;
     //ioport.print();
     ioport.init();
-    while(1)
-    {
-        ioport.printall();
-        sleep(1);
-        printf("\e[1;1H\e[2J");
-    }
+//    while(1)
+//    {
+//        ioport.printall();
+//        sleep(1);
+//        printf("\e[1;1H\e[2J");
+//    }
 
 
     //ioport.unpack_all();
-    //ioport.cmd_test();
+    ioport.cmd_test();
     //can_frame *pt=&ioport.canframe;
     //ioport.copy_to_can_frame(pt,&a[0]);
    //ioport.unpack_all();

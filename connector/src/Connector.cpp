@@ -88,7 +88,7 @@ unsigned char strbuffer2[13]={0x08,0x00,0x00,0x01,0x21,0x01,0x01,0x05,0x01,0x05,
    return 1;
     }
 
-    std::thread(&Connector::start_Read_thread, this);
+    //std::thread(&Connector::start_Read_thread, this);
 }
 void Connector::start_Read_thread()
 {
@@ -101,6 +101,7 @@ void Connector::start_Read_thread()
         const std::lock_guard<std::mutex> lock(scout_state_mutex);
         convert_data_once(agx_msg,scout_state);
         const std::lock_guard<std::mutex> unlock(scout_state_mutex);
+        sleep(0.5);
         //解锁
     }
 
@@ -165,6 +166,7 @@ void Connector::printall()//打印一次所有信息，调试专用函数
 
 //读取之后解锁
     const std::lock_guard<std::mutex> unlock(scout_state_mutex);
+    sleep(0.5);
 }
 
 
@@ -506,30 +508,49 @@ buf[2]=pt[2];
 buf[3]=pt[1];
 buf[4]=pt[0];
 Send(buf,13);
-for(int i=0;i<=12;++i)
-{
-    printf("%2x \n",buf[i]);
-}
-sleep(0.5);
+sleep(0.1);
+
 
  }
 void Connector::cmd_test()
 {
 //灯光控制指令,所有指令按照以下标准赋值，不要按照ugvsdk里面到代码赋值
+int i {0};
 ScoutLightCmd cmd {};
 cmd.enable_ctrl=1;
-cmd.front_mode=ScoutLightCmd::LightMode::BREATH;
-cmd.rear_mode=ScoutLightCmd::LightMode::BREATH;
+cmd.front_mode=ScoutLightCmd::LightMode::CONST_OFF;
+cmd.rear_mode=ScoutLightCmd::LightMode::CUSTOM;
 cmd.front_custom_value=0x01;
-cmd.rear_custom_value=0x01;
+cmd.rear_custom_value=0x64;
 SetLightCommand(cmd);
 printf("finish sending Lightcmd \n");
+while(1)
+{
+    cmd.front_mode=ScoutLightCmd::LightMode::CONST_ON;
+    cmd.rear_mode=ScoutLightCmd::LightMode::CONST_ON;
+    SetLightCommand(cmd);
+    sleep(1);
+        cmd.front_mode=ScoutLightCmd::LightMode::CONST_OFF;
+    cmd.rear_mode=ScoutLightCmd::LightMode::CONST_OFF;
+    SetLightCommand(cmd);
+    printf("finish sending Lightcmd \n");
+    sleep(1);
+
+}
+
 //定义运动控制参数
 //定义控制指令类对象
 current_motion_cmd_.angular_velocity=0;
 current_motion_cmd_.linear_velocity=1;
-SendMotionCmd();
+sleep(0.1);
+while(1)
+{
 
+
+SendMotionCmd();
+printf("sending motioncmd %d \n",i);
+//i++;
+}
 
 printf("finish sending motioncmd \n");
 

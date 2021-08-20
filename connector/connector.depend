@@ -1,13 +1,14 @@
 # depslib dependency file v1.0
-1629379606 source:/home/ubuntu/connector_project/connector/connector/main.cpp
+1629421175 source:/home/ubuntu/connector_project/connector/connector/main.cpp
 	<iostream>
 	"Connector.h"
+	<unistd.h>
 
 1629379592 /home/ubuntu/connector_project/connector/connector/include/Connector.h
 	<stdint.h>
 	<mutex>
 
-1629358934 source:/home/ubuntu/connector_project/connector/connector/src/Connector.cpp
+1629422998 source:/home/ubuntu/connector_project/connector/connector/src/Connector.cpp
 	"Connector.h"
 	<stdio.h>
 	<string.h>
@@ -17,4 +18,5 @@
 	<sys/socket.h>
 	<arpa/inet.h>
 	<mutex>
+	<thread>
 
