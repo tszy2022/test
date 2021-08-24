@@ -125,6 +125,8 @@ void Connector::start_Read_thread()
     int ret;
     while(1)
     {
+        read_tm.reset();
+        scout_state_mutex.lock();
         ret=aio_read(&aior);
         if (ret<0)
         {
@@ -136,6 +138,8 @@ void Connector::start_Read_thread()
             //   printf("client recv 第 %d 次 \n",++a);
             //     ++a;
         }
+        scout_state_mutex.unlock();
+        read_tm.sleep_until_ms(10);
 
 //        for(int i{0}; i<=10; ++i)
 //        {

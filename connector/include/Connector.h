@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <mutex>
 #include <aio.h>
+#include <thread>
 
 #define ACTUATOR1_ID ((uint8_t)0x00)
 #define ACTUATOR2_ID ((uint8_t)0x01)
@@ -606,6 +607,47 @@ struct ScoutCmdLimits
     static constexpr double max_angular_velocity = 0.5235;   // 0.5235 rad/s
     static constexpr double min_angular_velocity = -0.5235;  // -0.5235 rad/s
 };
+struct Timer
+{
+    using Clock = std::chrono::high_resolution_clock;
+    using time_point = typename Clock::time_point;
+    using duration = typename Clock::duration;
+
+    Timer()
+    {
+        tic_point = Clock::now();
+    };
+
+    time_point tic_point;
+
+    void reset()
+    {
+        tic_point = Clock::now();
+    };//返回当前的时间，精确度较高
+
+    // you have to call reset() before calling sleep functions
+    void sleep_until_ms(int64_t period_ms)
+    {
+        int64_t duration =
+            period_ms - std::chrono::duration_cast<std::chrono::milliseconds>(
+                Clock::now() - tic_point)
+            .count();
+        if (duration > 0)
+            std::this_thread::sleep_for(std::chrono::milliseconds(duration));
+    };
+
+    void sleep_until_us(int64_t period_us)
+    {
+        int64_t duration =
+            period_us - std::chrono::duration_cast<std::chrono::microseconds>(
+                Clock::now() - tic_point)
+            .count();
+        if (duration > 0)
+            std::this_thread::sleep_for(std::chrono::microseconds(duration));
+    };
+};
+
+
 
 class Connector
 {
@@ -614,7 +656,7 @@ public:
     uint8_t rec_buffer0[13] {};
     uint8_t rec_buffer[8192] {};
     uint8_t snd_buffer[13] {};
-
+    Timer read_tm;
     aiocb aior;
     aiocb aiow;
     std::mutex scout_state_mutex;
