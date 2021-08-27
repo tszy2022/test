@@ -138,7 +138,8 @@ void Connector::start_Read_thread()
             //   printf("client recv 第 %d 次 \n",++a);
             //     ++a;
         }
-        scout_state_mutex.unlock();
+        scout_state_mutex.unlock();//更改，这里使用队列技术，可以避免锁的使用
+		//或者使用pub方法也行，但是没有找到pub的模式实现
         read_tm.sleep_until_ms(10);
 
 //        for(int i{0}; i<=10; ++i)
@@ -623,7 +624,7 @@ void Connector::cmd_test()
 //定义控制指令类对象
     current_motion_cmd_.angular_velocity=0;
     current_motion_cmd_.linear_velocity=1;
-    sleep(0.1);
+    sleep(0.1);//本代码中所有sleep(小数)指令错误，会直接sleep(0)
     while(1)
     {
 
