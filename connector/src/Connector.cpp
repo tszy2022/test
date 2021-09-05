@@ -9,10 +9,23 @@
 #include <mutex>
 #include <thread>
 #include <aio.h>
+#include <sys/ioctl.h>
+#include <linux/sockios.h>
+#include "ros/ros.h"
 
-Connector::Connector()
+Connector::Connector(int baud)
 {
     m_sockfd=0;
+    baud_rate=baud;//如500k/bit则输入500
+    switch (baud)
+    {
+    case 500:
+    {
+        wait_time=10;
+        recsize=8192;//循环时使用
+    }
+
+    }
 }
 
 Connector::~Connector()
@@ -98,7 +111,6 @@ int Connector::init()
         Send(strbuffer2,13);
         sleep(1);
         printf("initialization completed. \n");
-        return 1;
 //std::thread read_thread();
 
 //std::thread read_thread();
@@ -114,15 +126,19 @@ int Connector::init()
     aiow.aio_offset=0;
     aior.aio_buf=rec_buffer;
     aiow.aio_buf=snd_buffer;
-    aior.aio_nbytes=8192;
+    aior.aio_nbytes=recsize;
     aiow.aio_nbytes=13;
-    std::thread(&Connector::start_Read_thread, this);
-    //std::thread(&Connector::start_Write_thread, this);
 
+    //不能在内部创建线程，会随着跳出init而销毁t1
+    //启动这条进程必须在主进程中
+    read_thread=std::thread(&Connector::start_Read_thread, this);
+    control_thread=std::thread(&Connector::Control_loop, this);
+    //
+    //start_Read_thread();
 }
 void Connector::start_Read_thread()
 {
-    int ret;
+    int ret,pending;
     while(1)
     {
         read_tm.reset();
@@ -138,22 +154,81 @@ void Connector::start_Read_thread()
             //   printf("client recv 第 %d 次 \n",++a);
             //     ++a;
         }
-        scout_state_mutex.unlock();//更改，这里使用队列技术，可以避免锁的使用
-		//或者使用pub方法也行，但是没有找到pub的模式实现
+        scout_state_mutex.unlock();
+
+        for(int i{0}; i<=line_num; ++i)
+        {
+        copy_to_can_frame(can_frame_pt, &(rec_buffer[0+13*i]));
+        DecodeCanFrame(can_frame_pt, agx_msg_pt);
+        convert_data_once(agx_msg,scout_state);
+        }
+       convert_msg_once();
         read_tm.sleep_until_ms(10);
 
-//        for(int i{0}; i<=10; ++i)
-//        {
-//            printf("%0x ",strbuffer[i]);
-//        }
+        //for(int i{0}; i<=12; ++i)
+        //{
+        //    printf("%0x ",rec_buffer[i]);
+        //}
+       // ioctl(m_sockfd, SIOCINQ, &pending);
+        //printf("  %d ",pending);
         // sleep(1);
-//        printf("\n");
+       // printf("\n");
 
     }
 }
+void Connector::Control_loop()
+{
+    while(1)
+    {
+        control_tm.reset();
+        SendRobotCmd();
+        control_tm.sleep_until_ms(control_period_ms);
+
+
+    }
+}
+void Connector::SendRobotCmd()
+{
+    //定义运动控制指令发送函数
+    // motion control message
+    AgxMessage m_msg;//定义msg
+    m_msg.type = AgxMsgMotionCommand;//选择can'通信种类为运动控制
+    memset(m_msg.body.motion_command_msg.raw, 0, 8);//初始化参信息
+
+    motion_cmd_mutex_.lock();//上锁保证在进行如下操作的时候相关的变量值不会被其他进程修改
+    int16_t linear_cmd =
+        static_cast<int16_t>(current_motion_cmd_.linear_velocity * 1000);//将线速度和角速度转变为can协议定义的数值
+    int16_t angular_cmd =
+        static_cast<int16_t>(current_motion_cmd_.angular_velocity * 1000);
+    int16_t lateral_cmd =
+        static_cast<int16_t>(current_motion_cmd_.lateral_velocity * 1000);
+    motion_cmd_mutex_.unlock();//解索
+
+    // SendControlCmd();
+    m_msg.body.motion_command_msg.cmd.linear_velocity.high_byte =//把上面得到的十六位速度信息转变为量子节的把为速度信息
+        (static_cast<uint16_t>(linear_cmd) >> 8) & 0x00ff;
+    m_msg.body.motion_command_msg.cmd.linear_velocity.low_byte =
+        (static_cast<uint16_t>(linear_cmd) >> 0) & 0x00ff;
+    m_msg.body.motion_command_msg.cmd.angular_velocity.high_byte =
+        (static_cast<uint16_t>(angular_cmd) >> 8) & 0x00ff;
+    m_msg.body.motion_command_msg.cmd.angular_velocity.low_byte =
+        (static_cast<uint16_t>(angular_cmd) >> 0) & 0x00ff;
+    m_msg.body.motion_command_msg.cmd.lateral_velocity.high_byte =
+        (static_cast<uint16_t>(lateral_cmd) >> 8) & 0x00ff;
+    m_msg.body.motion_command_msg.cmd.lateral_velocity.low_byte =
+        (static_cast<uint16_t>(lateral_cmd) >> 0) & 0x00ff;
+
+    // send to can bus
+    can_frame m_frame;//定义can框架对象
+    EncodeCanFrame(&m_msg, &m_frame);//打包can信息
+
+
+    copy_to_buffer(&m_frame);
+
+}
 void Connector::printall()//打印一次所有信息，调试专用函数
 {
-    const std::lock_guard<std::mutex> lock(scout_state_mutex);
+    scout_state_mutex.lock();
     //读取之前防止翻转状态，上锁
     printf("display current state: \n");
     printf("base_state：%0x \n",scout_state.base_state);
@@ -197,7 +272,7 @@ void Connector::printall()//打印一次所有信息，调试专用函数
     printf("left_odometry:%f m right_odometry:%f m \n",scout_state.left_odometry,scout_state.right_odometry);
 
     printf("\n \n --BMS state----------------------------------------segment-- \n \n");
-    printf("bms_battery_voltage:%d V \n",scout_state.bms_battery_voltage);
+    printf("bms_battery_voltage:%lf V \n",scout_state.bms_battery_voltage);
     printf("battery_current:%f A \n",scout_state.battery_current);
 
     printf("\n \n --temperature----------------------------------------segment-- \n \n");
@@ -210,8 +285,8 @@ void Connector::printall()//打印一次所有信息，调试专用函数
 
 
 //读取之后解锁
-    const std::lock_guard<std::mutex> unlock(scout_state_mutex);
-    sleep(0.5);
+scout_state_mutex.unlock();
+    sleep(1);
 }
 
 
@@ -358,15 +433,14 @@ void Connector::EncodeCanFrame(const AgxMessage *msg, struct can_frame *tx_frame
 }
 void Connector::copy_to_can_frame(can_frame *rx_frame, uint8_t *msg)
 {
-    ++msg;
     rx_frame->can_id=(
-                         static_cast<uint32_t>(msg[0]) |
-                         static_cast<uint32_t>(msg[2]) << 8 |
-                         static_cast<uint32_t>(msg[3]));
-//          printf("canID1: %0x finish \n",rx_frame->can_id);
-    for(int count{0}; count<=7; ++count)
+                         static_cast<uint32_t>(msg[3]) << 8 |
+                         static_cast<uint32_t>(msg[4]));
+      //   printf("canID1: %0x finish \n",rx_frame->can_id);
+      //   sleep(1);
+    for(int count{1}; count<=8; ++count)
     {
-        rx_frame->data[count]=msg[count+4];
+        rx_frame->data[count-1]=msg[count+4];
     }
 
 }
@@ -590,7 +664,6 @@ void Connector::copy_to_buffer(can_frame *rx_frame)
     buf[3]=pt[1];
     buf[4]=pt[0];
     Send(buf,13);
-    sleep(0.1);
 
 
 }
@@ -606,30 +679,34 @@ void Connector::cmd_test()
     cmd.rear_custom_value=0x64;
     SetLightCommand(cmd);
     printf("finish sending Lightcmd \n");
-    while(1)
-    {
-        cmd.front_mode=ScoutLightCmd::LightMode::CONST_ON;
-        cmd.rear_mode=ScoutLightCmd::LightMode::CONST_ON;
-        SetLightCommand(cmd);
-        sleep(1);
-        cmd.front_mode=ScoutLightCmd::LightMode::CONST_OFF;
-        cmd.rear_mode=ScoutLightCmd::LightMode::CONST_OFF;
-        SetLightCommand(cmd);
-        printf("finish sending Lightcmd \n");
-        sleep(1);
+//    while(1)
+//    {
+//        testcmd.reset();
+//        cmd.front_mode=ScoutLightCmd::LightMode::CONST_ON;
+//        cmd.rear_mode=ScoutLightCmd::LightMode::CONST_ON;
+//        SetLightCommand(cmd);
+//        testcmd.sleep_until_ms(500);
+//        //sleep(1);
+//        testcmd.reset();
+//        cmd.front_mode=ScoutLightCmd::LightMode::CONST_OFF;
+//        cmd.rear_mode=ScoutLightCmd::LightMode::CONST_OFF;
+//        SetLightCommand(cmd);
+//        printf("finish sending Lightcmd \n");
+//        testcmd.sleep_until_ms(500);
+//        //sleep(1);
+//
+//    }
 
-    }
 
-//定义运动控制参数
-//定义控制指令类对象
     current_motion_cmd_.angular_velocity=0;
     current_motion_cmd_.linear_velocity=1;
-    sleep(0.1);//本代码中所有sleep(小数)指令错误，会直接sleep(0)
+    sleep(1);
+    SetMotionCommand(1.5,0,0,current_motion_cmd_.fault_clear_flag);
     while(1)
     {
 
 
-        SendMotionCmd();
+
         printf("sending motioncmd %d \n",i);
 //i++;
     }
@@ -637,43 +714,52 @@ void Connector::cmd_test()
     printf("finish sending motioncmd \n");
 
 }
-void Connector::SendMotionCmd()
+void Connector::SetMotionCommand(double linear_vel, double lateral_velocity, double angular_vel, ScoutMotionCmd::FaultClearFlag fault_clr_flag)
 {
-    //定义运动控制指令发送函数
-    // motion control message
-    AgxMessage m_msg;//定义msg
-    m_msg.type = AgxMsgMotionCommand;//选择can'通信种类为运动控制
-// memset(m_msg.body.motion_command_msg.raw, 0, 8);//初始化参信息
+    //限制运动控制指令的指令值
+    // make sure cmd thread is started before attempting to send commands
+    //if (!cmd_thread_started_) StartCmdThread();//如果控制进程未开启，那么开启控制进程
 
-    //motion_cmd_mutex_.lock();//上锁保证在进行如下操作的时候相关的变量值不会被其他进程修改
-    int16_t linear_cmd =
-        static_cast<int16_t>(current_motion_cmd_.linear_velocity * 1000);//将线速度和角速度转变为can协议定义的数值
-    int16_t angular_cmd =
-        static_cast<int16_t>(current_motion_cmd_.angular_velocity * 1000);
-    int16_t lateral_cmd =
-        static_cast<int16_t>(current_motion_cmd_.lateral_velocity * 1000);
-    //motion_cmd_mutex_.unlock();//解索
+    if (lateral_velocity < ScoutMiniCmdLimits::min_lateral_velocity)//为各个控制指令增加限制
+        lateral_velocity = ScoutMiniCmdLimits::min_lateral_velocity;
+    if (lateral_velocity > ScoutMiniCmdLimits::max_lateral_velocity)
+        lateral_velocity = ScoutMiniCmdLimits::max_lateral_velocity;
 
-    // SendControlCmd();
-    m_msg.body.motion_command_msg.cmd.linear_velocity.high_byte =//把上面得到的十六位速度信息转变为量子节的把为速度信息
-        (static_cast<uint16_t>(linear_cmd) >> 8) & 0x00ff;
-    m_msg.body.motion_command_msg.cmd.linear_velocity.low_byte =
-        (static_cast<uint16_t>(linear_cmd) >> 0) & 0x00ff;
-    m_msg.body.motion_command_msg.cmd.angular_velocity.high_byte =
-        (static_cast<uint16_t>(angular_cmd) >> 8) & 0x00ff;
-    m_msg.body.motion_command_msg.cmd.angular_velocity.low_byte =
-        (static_cast<uint16_t>(angular_cmd) >> 0) & 0x00ff;
-    m_msg.body.motion_command_msg.cmd.lateral_velocity.high_byte =
-        (static_cast<uint16_t>(lateral_cmd) >> 8) & 0x00ff;
-    m_msg.body.motion_command_msg.cmd.lateral_velocity.low_byte =
-        (static_cast<uint16_t>(lateral_cmd) >> 0) & 0x00ff;
+    if (1)  //根据车型选择速度限制的数值//非mini车
+    {
+        if (linear_vel < ScoutCmdLimits::min_linear_velocity)
+            linear_vel = ScoutCmdLimits::min_linear_velocity;
+        if (linear_vel > ScoutCmdLimits::max_linear_velocity)
+            linear_vel = ScoutCmdLimits::max_linear_velocity;
+        if (angular_vel < ScoutCmdLimits::min_angular_velocity)
+            angular_vel = ScoutCmdLimits::min_angular_velocity;
+        if (angular_vel > ScoutCmdLimits::max_angular_velocity)
+            angular_vel = ScoutCmdLimits::max_angular_velocity;
 
-    // send to can bus
-    can_frame m_frame;//定义can框架对象
-    EncodeCanFrame(&m_msg, &m_frame);//打包can信息
-    copy_to_buffer(&m_frame);
+        std::lock_guard<std::mutex> guard(motion_cmd_mutex_);//上锁
+        current_motion_cmd_.linear_velocity = linear_vel;//把限制好的数值传递给cmd
+        current_motion_cmd_.angular_velocity = angular_vel;
+        current_motion_cmd_.lateral_velocity = lateral_velocity;
+        current_motion_cmd_.fault_clear_flag = fault_clr_flag;
+    }
+    else
+    {
+        if (linear_vel < ScoutMiniCmdLimits::min_linear_velocity)
+            linear_vel = ScoutMiniCmdLimits::min_linear_velocity;
+        if (linear_vel > ScoutMiniCmdLimits::max_linear_velocity)
+            linear_vel = ScoutMiniCmdLimits::max_linear_velocity;
+        if (angular_vel < ScoutMiniCmdLimits::min_angular_velocity)
+            angular_vel = ScoutMiniCmdLimits::min_angular_velocity;
+        if (angular_vel > ScoutMiniCmdLimits::max_angular_velocity)
+            angular_vel = ScoutMiniCmdLimits::max_angular_velocity;
+
+        std::lock_guard<std::mutex> guard(motion_cmd_mutex_);
+        current_motion_cmd_.linear_velocity = linear_vel;
+        current_motion_cmd_.angular_velocity = angular_vel;
+        current_motion_cmd_.lateral_velocity = lateral_velocity;
+        current_motion_cmd_.fault_clear_flag = fault_clr_flag;
+    }
 }
-
 
 
 
@@ -792,3 +878,35 @@ bool Connector::DecodeCanFrame(const struct can_frame *rx_frame, AgxMessage *msg
 
     return true;
 }
+ void Connector::convert_msg_once()
+ {
+    status_msg.header.stamp = ros::Time::now();
+
+    status_msg.linear_velocity = scout_state.linear_velocity;
+    status_msg.angular_velocity = scout_state.angular_velocity;
+
+    status_msg.base_state = scout_state.base_state;
+    status_msg.control_mode = scout_state.control_mode;
+    status_msg.fault_code = scout_state.fault_code;
+    status_msg.battery_voltage = scout_state.battery_voltage;
+
+    for (int i = 0; i < 4; ++i)
+    {
+      status_msg.motor_states[i].current = scout_state.actuator_states[i].motor_current;
+      status_msg.motor_states[i].rpm = scout_state.actuator_states[i].motor_rpm;
+      status_msg.motor_states[i].temperature = scout_state.actuator_states[i].motor_temperature;
+      status_msg.motor_states[i].motor_pose = scout_state.actuator_states[i].motor_pulses;
+      status_msg.driver_states[i].driver_state = scout_state.actuator_states[i].driver_state;
+      status_msg.driver_states[i].driver_voltage = scout_state.actuator_states[i].driver_voltage;
+      status_msg.driver_states[i].driver_temperature = scout_state.actuator_states[i].driver_temperature;
+    }
+
+    status_msg.light_control_enabled = scout_state.light_control_enabled;
+    status_msg.front_light_state.mode = scout_state.front_light_state.mode;
+    status_msg.front_light_state.custom_value =
+        scout_state.front_light_state.custom_value;
+    status_msg.rear_light_state.mode = scout_state.rear_light_state.mode;
+    status_msg.rear_light_state.custom_value =
+        scout_state.front_light_state.custom_value;
+
+ }
