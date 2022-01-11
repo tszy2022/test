@@ -27,7 +27,7 @@ void gps_driver::init()
 {
   printf("init m_sock_var :%d \n", m_sockfd);
   gps_driver::ConnectToServer("192.168.1.253", 1030); //这里改成自己要的
-  ros::Publisher Msg_pub = nh.advertise<sensor_msgs::NavSatFix>("fix", 20);
+  Msg_pub = nh.advertise<sensor_msgs::NavSatFix>("fix", 20);
   gps_driver::start_read_thread();
 }
 
@@ -302,5 +302,17 @@ printf("%.10lf lat %.10lf lon %.10lf high \n", rec_data.high_lat ,rec_data.high_
 void gps_driver::broadcastcor()
 {
   
+sensor_msgs::NavSatFix Navmsg;
+Navmsg.header.frame_id="gps";
+//Navmsg.header.seq=1;
+Navmsg.header.stamp=ros::Time::now();
+Navmsg.status.status=Navmsg.status.STATUS_GBAS_FIX;//修正算法选择
+Navmsg.status.service=Navmsg.status.SERVICE_GPS;
+Navmsg.longitude=rec_data.high_lon;
+Navmsg.latitude=rec_data.high_lat;
+Navmsg.altitude=rec_data.high_alt;
+Navmsg.position_covariance_type=Navmsg.COVARIANCE_TYPE_UNKNOWN;//方差类型选择
+ Msg_pub.publish(Navmsg);
 
+ 
 }
